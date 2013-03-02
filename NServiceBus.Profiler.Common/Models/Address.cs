@@ -118,6 +118,12 @@ namespace NServiceBus.Profiler.Common.Models
             }
         };
 
+        public static bool IsIpAddress(string machineName)
+        {
+            IPAddress address;
+            return System.Net.IPAddress.TryParse(machineName, out address);
+        }
+
         public static bool IsRemote(string machineName)
         {
             if (IsLocal(machineName))
@@ -203,7 +209,11 @@ namespace NServiceBus.Profiler.Common.Models
         /// </summary>
         public string ToFormatName()
         {
-            var formatNameConnection = IsRemote(Machine) ? FORMATNAME_TCP : FORMATNAME;
+            //See http://msdn.microsoft.com/en-us/library/windows/desktop/ms700996(v=vs.85).aspx
+            //Jist: Direct=OS for machine name or fully qualified domain name (ex. MYPC01 or MYPC01.MYDOMAIN.COM)
+            //      Direct=TCP for IP Address
+            var formatNameConnection = IsIpAddress(Machine) ? FORMATNAME_TCP : FORMATNAME;
+            
             return string.Format("{0}{1}{2}{3}", formatNameConnection, Machine, PRIVATE, Queue);
         }
 

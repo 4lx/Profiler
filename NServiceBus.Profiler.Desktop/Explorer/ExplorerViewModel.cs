@@ -150,14 +150,13 @@ namespace NServiceBus.Profiler.Desktop.Explorer
         public virtual void ConnectToQueue(string computerName)
         {
             Guard.NotNull(() => computerName, computerName);
+            Items.Clear(); //There is probably a better place for this
 
-            //NOTE: check ipv6 as well?
-            var ipv4 = Address.GetIpAddressOrMachineName(computerName);
-            Guard.NotNullOrEmpty(() => ipv4, ipv4);
-
-            ConnectedToComputer = ipv4;
+            ConnectedToComputer = computerName; //Leaving alone - Fixes issue where you put in a Machine Name and the Node is added with it's corresponding IP Address
             AddServerNode();
             RefreshQueues();
+            _view.ExpandNode(MachineRoot); //Expand after connecting to new machine; There is probably a better place for this..
+            
         }
 
         public void RefreshQueues()

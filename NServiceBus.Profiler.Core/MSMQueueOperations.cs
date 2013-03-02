@@ -30,6 +30,11 @@ namespace NServiceBus.Profiler.Core
         public virtual IList<Queue> GetQueues(string machineName)
         {
             var queuesPrivate = MessageQueue.GetPrivateQueuesByMachine(machineName).ToList();
+           
+           if (!Address.IsLocal(machineName)) 
+           {
+               FixRemoteQueuePaths(queuesPrivate, machineName);
+           }
             var mapped = queuesPrivate.Select(x => _mapper.MapQueue(x)).ToList();
 
             queuesPrivate.ForEach(x => x.Close());
@@ -196,6 +201,37 @@ namespace NServiceBus.Profiler.Core
                 }
             }
             return messageCount;
+        }
+        /// <summary>
+        /// Fix for Win2k3 and possible other Windows version - Issue connecting to remote queues
+        /// </summary>
+        /// <param name="queues"></param>
+        /// <param name="machineName"></param>
+        private void FixRemoteQueuePaths(List<MessageQueue> queues, string machineName)
+        {
+            //When dealing with Win2003 (And possibly others, but no 2008 machines available), MessageQueue.GetPrivateQueuesByMachineName() 
+            //returns queues that throw Invalid Path exceptions when checking most properties.  
+            //Simply calling the .Path property setter fixes it for reasons unknown.
+            bool fixRequired = false;
+            if (queues != null && queues.Any())
+            {
+                try
+                {
+                    var check = queues.First().CanRead;
+                }
+                catch (Exception)
+                {
+                    fixRequired = true;
+                }
+            }
+
+            if (fixRequired)
+            {
+                foreach (var queue in queues)
+                {
+                    queue.Path = queue.Path;
+                }
+            }
         }
     }
 }
