@@ -60,7 +60,8 @@ namespace NServiceBus.Profiler.Common.CodeParser
             else if (text[0] == '"')
             {
                 res.Add(new CodeLexem(LexemType.Quotes, CutString(ref text, 1)));
-                var end = text.IndexOf('"');
+                //var end = text.IndexOf('"');
+                var end = FindEndQuoteForValue(text);
                 res.Add(new CodeLexem(LexemType.Value, CutString(ref text, end)));
                 res.Add(new CodeLexem(LexemType.Quotes, CutString(ref text, 1)));
             }
@@ -72,6 +73,27 @@ namespace NServiceBus.Profiler.Common.CodeParser
             }
         }
 
+        private int FindEndQuoteForValue(SourcePart text)
+        {
+          if (text == null || text.Length < 2)
+            return -1;
+
+          var start = 1;
+          var end = -1;
+          var length = text.Length;
+          var indexMatch = false;
+          while (!indexMatch && start > 0 && end < text.Length)
+          {
+            end = text.Substring(start, length - start).IndexOf("\"") + start;
+            if (end != -1)
+            {
+              indexMatch = text.Substring(end - 1, 1).IndexOf("\\") == -1;
+            }
+            start = end + 1;
+          }
+
+          return indexMatch ? end : -1;
+        }
         private void ParseSymbol(ICollection<CodeLexem> res, ref SourcePart text)
         {
             var index = text.IndexOfAny(JsonSymbol);
